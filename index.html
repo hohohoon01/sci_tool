@@ -59,6 +59,12 @@ h1 img{border-radius:9px;border:2px solid var(--ink)}
 .chip b{font-weight:600}
 .chip small{color:var(--ink2);margin-left:4px}
 .chip[aria-pressed=true]{border-color:var(--ink);background:var(--yellow)}
+#cabs{display:grid;gap:10px}
+.room{border:2px solid var(--line);border-radius:var(--r);background:var(--yellow);padding:10px;box-shadow:var(--shadow)}
+.room.r0{background:var(--pink)} .room.r1{background:var(--blue)}
+.room .rt{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 2px 8px;font:400 17px var(--title)}
+.room .rt small{font:12px/1 "Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:var(--ink);opacity:.7;white-space:nowrap}
+.room .rc{display:flex;flex-wrap:wrap;gap:6px}
 .count{font-size:13px;color:var(--ink2);margin:8px 2px}
 
 /* 목록 */
@@ -147,7 +153,7 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
   .addTop{display:block;height:44px;flex:none}
   .fab{display:none}
   .list{grid-template-columns:1fr 1fr}
-  .cabView{display:grid;grid-template-columns:230px 1fr;gap:18px;align-items:start}
+  .cabView{display:grid;grid-template-columns:270px 1fr;gap:18px;align-items:start}
   .cabView .chips{position:sticky;top:130px;margin-top:14px}
   .cell{min-height:64px}
   .shelf{grid-template-columns:64px 1fr}
@@ -234,7 +240,7 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
 const API_URL = "https://script.google.com/macros/s/AKfycbxj4tg305spuNixvoHieVKe55vTNVDfgwBn71Nw7VDQfp2CUkEA2qGC9vT7iA2BcXTNmg/exec";
 /* ─────────────────────────────────────────────────────────── */
 
-const VER = "4"; // 고칠 때마다 올립니다
+const VER = "5"; // 고칠 때마다 올립니다
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1nN3gv126M7_0eIZJyqdEIz5ubmkKLiBS09KRHS3Fsq4/edit";
 const SHEET_PIN = "1630";
 
@@ -269,6 +275,7 @@ const cho = s => [...s].map(ch => { const c = ch.charCodeAt(0) - 0xAC00; return 
 const norm = s => String(s || "").toLowerCase().replace(/\s+/g, "");
 const isDrawer = d => String(d || "").startsWith("서랍");
 const roomOf = j => j.includes("-") ? j.split("-")[0] : "기타";
+const roomName = r => { const m = /^과(\d+)$/.exec(r); return m ? "과학실 " + m[1] : r; };
 const rooms = () => [...new Set(S.set.jang.concat(S.items.map(i => i.jang)).filter(Boolean).map(roomOf))];
 const allJang = () => [...new Set(S.set.jang.concat(S.items.map(i => i.jang)).filter(Boolean))];
 const posText = it => [it.dan, it.lr].filter(Boolean).join(" ");
@@ -360,7 +367,11 @@ function renderCab(){
   const js = allJang(), rs = rooms();
   if (!js.includes(S.cab)) S.cab = js[0] || "";
   const cnt = {}; S.items.forEach(i => cnt[i.jang] = (cnt[i.jang] || 0) + 1);
-  $("cabs").innerHTML = js.map(j => `<button class="chip" data-cab="${esc(j)}" aria-pressed="${S.cab === j}"><b>${esc(j)}</b>${cnt[j] ? `<small>${cnt[j]}</small>` : ""}</button>`).join("");
+  $("cabs").innerHTML = rs.map((r, ri) => {
+    const mine = js.filter(j => roomOf(j) === r), total = mine.reduce((a, j) => a + (cnt[j] || 0), 0);
+    return `<div class="room r${ri % 3}"><div class="rt"><span>${esc(roomName(r))}</span><small>교구장 ${mine.length}개 · 교구 ${total}개</small></div><div class="rc">${
+      mine.map(j => `<button class="chip" data-cab="${esc(j)}" aria-pressed="${S.cab === j}"><b>${esc(j)}</b>${cnt[j] ? `<small>${cnt[j]}</small>` : ""}</button>`).join("")}</div></div>`;
+  }).join("");
   $("cabTitle").innerHTML = `<span class="badge r${rs.indexOf(roomOf(S.cab)) % 3}">${esc(S.cab)}</span> 교구 ${cnt[S.cab] || 0}개`;
   const here = S.items.filter(i => i.jang === S.cab);
   const dans = [...new Set(S.set.dan.concat(here.map(i => i.dan).filter(Boolean)))];
@@ -390,7 +401,7 @@ function openForm(it, preset){
   const v = it || { jang: (preset && preset.jang) || last.jang || (S.view === "cab" ? S.cab : "") || allJang()[0], dan: preset ? preset.dan : last.dan || "", lr: preset ? preset.lr : last.lr || "", name: "", spec: "", qty: "", unit: "", note: "" };
   $("dTitle").textContent = it ? "교구 고치기" : "교구 추가";
   const groups = {}; allJang().forEach(j => (groups[roomOf(j)] = groups[roomOf(j)] || []).push(j));
-  $("fJang").innerHTML = Object.entries(groups).map(([r, js]) => `<optgroup label="${esc(r)}">${js.map(j => `<option ${j === v.jang ? "selected" : ""}>${esc(j)}</option>`).join("")}</optgroup>`).join("");
+  $("fJang").innerHTML = Object.entries(groups).map(([r, js]) => `<optgroup label="${esc(roomName(r))}">${js.map(j => `<option ${j === v.jang ? "selected" : ""}>${esc(j)}</option>`).join("")}</optgroup>`).join("");
   radios($("fDan"), "dan", [...new Set(S.set.dan.concat(v.dan || []))], v.dan);
   radios($("fLr"), "lr", [...new Set(S.set.lr.concat(v.lr || []))], v.lr);
   syncLr();
