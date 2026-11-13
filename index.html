@@ -191,8 +191,9 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
       <div class="cab" id="cab"></div>
     </div>
   </section>
-</main>
 
+<div class="count" style="text-align:center;margin-top:24px" id="ver"></div>
+</main>
 <button class="fab" id="fab" aria-label="교구 추가">＋</button>
 
 <dialog id="dlg">
@@ -233,6 +234,7 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
 const API_URL = "https://script.google.com/macros/s/AKfycbxj4tg305spuNixvoHieVKe55vTNVDfgwBn71Nw7VDQfp2CUkEA2qGC9vT7iA2BcXTNmg/exec";
 /* ─────────────────────────────────────────────────────────── */
 
+const VER = "4"; // 고칠 때마다 올립니다
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1nN3gv126M7_0eIZJyqdEIz5ubmkKLiBS09KRHS3Fsq4/edit";
 const SHEET_PIN = "1630";
 
@@ -458,8 +460,18 @@ document.addEventListener("click", e => {
   else if (b.dataset.add != null){ const [dan, lr] = b.dataset.add.split("|"); openForm(null, { jang: S.cab, dan, lr }); }
   else if (b.dataset.id){ const it = S.items.find(x => x.id === b.dataset.id); if (it) openView(it); }
 });
+// 새 버전이 올라와 있으면 예전 화면(캐시) 대신 새 화면으로 바꿉니다.
+(async () => {
+  try{
+    const t = await (await fetch(location.pathname + "?t=" + Date.now(), { cache: "no-store" })).text();
+    const m = t.match(/const VER = "(\w+)"/);
+    const q = new URLSearchParams(location.search);
+    if (m && m[1] !== VER && q.get("v") !== m[1]){ q.set("v", m[1]); location.replace(location.pathname + "?" + q); }
+  }catch(e){}
+})();
 const p = new URLSearchParams(location.search).get("jang");
 if (p){ S.view = "cab"; S.cab = p; }
+$("ver").textContent = "버전 " + VER;
 render(); load();
 </script>
 </body>
