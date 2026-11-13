@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFF6E5">
+<title>강동중 과학실 교구 찾기</title>
+<meta name="description" content="강동중학교 과학실 교구 위치 찾기">
+<meta name="apple-mobile-web-app-title" content="과학실 교구">
+<meta property="og:title" content="강동중 과학실 교구 찾기">
+<meta property="og:description" content="교구가 어느 장, 어느 칸에 있는지 바로 찾아요">
+<meta property="og:image" content="https://hohohoon01.github.io/sci_tool/icon.png">
+<meta property="og:url" content="https://hohohoon01.github.io/sci_tool/">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFF6E5; --card:#FFFFFF; --ink:#6A4B3A; --ink2:#A38B7B; --line:#E9D6C2;
+  --pink:#FFCFD8; --pink2:#FF9FB2; --blue:#C9E7F7; --blue2:#8CC8EA;
+  --yellow:#FFEDB0; --yellow2:#F7CE5B; --mint:#D3EFD9; --wood:#F3DFC6;
+  --r:18px; --shadow:0 3px 0 var(--line);
+  --title:"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 "Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  background-image:radial-gradient(var(--yellow) 2px,transparent 2.5px),radial-gradient(var(--pink) 2px,transparent 2.5px);
+  background-size:64px 64px;background-position:0 0,32px 32px;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:1080px;margin:0 auto;padding:0 14px}
+
+/* 상단 */
+.top{position:sticky;top:0;z-index:20;background:rgba(255,246,229,.94);backdrop-filter:blur(6px);padding:10px 0 8px;border-bottom:2px dashed var(--line)}
+.bar{display:flex;align-items:center;gap:8px}
+h1{font:400 22px/1 var(--title);margin:0;flex:1;display:flex;align-items:center;gap:6px;white-space:nowrap}
+h1 img{border-radius:9px;border:2px solid var(--ink)}
+@media (max-width:400px){h1{font-size:19px}}
+.sync{font-size:12px;color:var(--ink2);white-space:nowrap}
+.sync.busy{color:var(--pink2)}
+.icon{border:2px solid var(--ink);background:var(--card);border-radius:50%;width:36px;height:36px;display:grid;place-items:center;font-size:16px;box-shadow:var(--shadow)}
+.icon:active{transform:translateY(2px);box-shadow:none}
+.search{position:relative;margin-top:10px}
+.search input{width:100%;height:48px;border:2px solid var(--ink);border-radius:999px;background:var(--card);padding:0 44px 0 46px;font-size:16px;outline:none;box-shadow:var(--shadow)}
+.search input:focus{border-color:var(--pink2);box-shadow:0 3px 0 var(--pink)}
+.search .mag{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px}
+.search .clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:var(--wood);border-radius:50%;width:30px;height:30px;display:none}
+.search.has .clear{display:block}
+.tabs{display:flex;gap:8px;margin-top:10px}
+.tab{flex:1;height:40px;border:2px solid var(--ink);border-radius:14px;background:var(--card);font:400 16px var(--title);box-shadow:var(--shadow)}
+.tab[aria-selected=true]{background:var(--yellow)}
+.addTop{display:none}
+
+/* 칩 */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 4px}
+.chip{border:2px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:14px;white-space:nowrap}
+.chip b{font-weight:600}
+.chip small{color:var(--ink2);margin-left:4px}
+.chip[aria-pressed=true]{border-color:var(--ink);background:var(--yellow)}
+.count{font-size:13px;color:var(--ink2);margin:8px 2px}
+
+/* 목록 */
+.list{display:grid;gap:8px}
+.item{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;text-align:left;width:100%;background:var(--card);border:2px solid var(--line);border-radius:var(--r);padding:11px 14px;box-shadow:var(--shadow)}
+.item:hover{border-color:var(--ink)}
+.item .name{font-weight:700;font-size:16px;word-break:keep-all}
+.item .spec{font-weight:400;color:var(--ink2);font-size:13px;margin-left:6px}
+.item .qty{font:400 15px var(--title);background:var(--mint);border-radius:999px;padding:2px 10px;white-space:nowrap}
+.item .loc{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.badge{font:400 14px var(--title);border-radius:10px;padding:3px 9px;border:2px solid var(--ink);background:var(--yellow);white-space:nowrap}
+.badge.r0{background:var(--pink)} .badge.r1{background:var(--blue)}
+.pos{font:400 14px var(--title);background:var(--wood);border-radius:10px;padding:3px 9px}
+.note{font-size:12.5px;color:var(--ink2)}
+.empty{text-align:center;color:var(--ink2);padding:40px 10px;font:400 16px var(--title)}
+.empty span{display:block;font-size:40px;margin-bottom:6px}
+
+/* 교구장 */
+.cabTitle{font:400 20px var(--title);margin:14px 2px 8px;display:flex;align-items:center;gap:8px}
+.cab{background:var(--wood);border:3px solid var(--ink);border-radius:22px;padding:10px;display:grid;gap:8px;box-shadow:0 5px 0 var(--line)}
+.shelf{display:grid;grid-template-columns:46px 1fr;gap:8px;align-items:stretch}
+.shelf .lab{font:400 15px var(--title);display:grid;place-items:center;background:var(--card);border:2px solid var(--ink);border-radius:12px;text-align:center}
+.shelf.low .lab{background:var(--blue)} .shelf.drawer .lab{background:var(--pink)} .shelf.up .lab{background:var(--yellow)}
+.cells{display:grid;gap:6px;grid-template-columns:repeat(var(--n),1fr)}
+.cell{background:var(--card);border-radius:12px;padding:6px;min-height:52px;display:flex;flex-wrap:wrap;gap:5px;align-content:flex-start;position:relative;border:2px solid transparent}
+.cell.full{grid-column:1/-1}
+.cell .cl{font-size:11px;color:var(--ink2);width:100%;display:flex;justify-content:space-between;align-items:center}
+.cell .plus{border:0;background:var(--bg);border-radius:50%;width:24px;height:24px;line-height:1;color:var(--ink2);font-size:16px}
+.cell .plus:hover{background:var(--yellow);color:var(--ink)}
+.pill{border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:4px 8px;font-size:13.5px;text-align:left;word-break:keep-all}
+.pill:hover{border-color:var(--ink)}
+.pill i{font-style:normal;color:var(--ink2);font-size:12px;margin-left:3px}
+
+/* FAB */
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:30;width:62px;height:62px;border-radius:50%;border:3px solid var(--ink);background:var(--pink);font:400 34px/1 var(--title);box-shadow:0 5px 0 var(--ink)}
+.fab:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+
+/* 입력창 */
+dialog{border:3px solid var(--ink);border-radius:26px;padding:0;width:min(520px,100vw);max-height:92dvh;color:var(--ink);background:var(--bg)}
+dialog::backdrop{background:rgba(106,75,58,.35)}
+form{padding:16px 16px calc(16px + env(safe-area-inset-bottom));display:grid;gap:12px}
+.dh{display:flex;align-items:center;justify-content:space-between}
+.dh h2{font:400 20px var(--title);margin:0}
+label.f{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
+.f input,.f select{height:44px;border:2px solid var(--line);border-radius:12px;background:var(--card);padding:0 12px;font-size:16px;color:var(--ink);outline:none;width:100%;min-width:0}
+.f input:focus,.f select:focus{border-color:var(--pink2)}
+.grp{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opts label{position:relative}
+.opts input{position:absolute;opacity:0;inset:0}
+.opts span{display:block;border:2px solid var(--line);background:var(--card);border-radius:12px;padding:8px 13px;font:400 15px var(--title);color:var(--ink)}
+.opts input:checked+span{border-color:var(--ink);background:var(--yellow)}
+.opts input:focus-visible+span{outline:2px solid var(--pink2)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qtyBox{display:grid;grid-template-columns:44px 1fr 44px;gap:6px}
+.qtyBox button{border:2px solid var(--line);background:var(--card);border-radius:12px;font-size:20px}
+.qtyBox input{text-align:center}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.btn{flex:1;height:48px;border:2px solid var(--ink);border-radius:14px;font:400 16px var(--title);background:var(--card);box-shadow:var(--shadow);white-space:nowrap;padding:0 12px}
+.btn.main{background:var(--pink)} .btn.sub{background:var(--blue)} .btn.del{flex:0 0 auto;background:var(--card);color:#C2566B}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.vw{padding:16px 16px calc(18px + env(safe-area-inset-bottom));display:grid;gap:14px}
+.dh.top0{align-items:flex-start;gap:10px}
+.vw h2{font-size:24px;line-height:1.25;word-break:keep-all;padding-top:4px}
+.vbtn{display:flex;gap:8px;align-items:center;flex:none}
+.btn.sm{flex:none;height:38px;font-size:15px;padding:0 14px}
+.vloc{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px}
+.vloc .badge,.vloc .pos{font-size:19px;padding:5px 12px}
+.vw dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:16px}
+.vw dt{color:var(--ink2);font-size:13px;padding-top:2px;white-space:nowrap}
+.vw dd{margin:0;word-break:break-word}
+.vw .btn{flex:none;width:100%}
+.vw .btn.sm{width:auto}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;border-radius:999px;padding:9px 18px;font-size:14px;z-index:99;opacity:0;pointer-events:none;transition:opacity .2s;white-space:nowrap}
+.toast.on{opacity:1}
+.demo{background:var(--yellow);border:2px dashed var(--ink);border-radius:14px;padding:8px 12px;font-size:13px;margin-top:12px}
+[hidden]{display:none!important}
+
+@media (max-width:719px){
+  dialog{margin:auto auto 0;border-radius:26px 26px 0 0;border-bottom:0;max-width:100vw}
+}
+@media (min-width:720px){
+  body{padding-bottom:40px}
+  .bar2{display:grid;grid-template-columns:1fr 260px auto;gap:10px;align-items:center;margin-top:10px}
+  .search,.tabs{margin-top:0}
+  .addTop{display:block;height:44px;flex:none}
+  .fab{display:none}
+  .list{grid-template-columns:1fr 1fr}
+  .cabView{display:grid;grid-template-columns:230px 1fr;gap:18px;align-items:start}
+  .cabView .chips{position:sticky;top:130px;margin-top:14px}
+  .cell{min-height:64px}
+  .shelf{grid-template-columns:64px 1fr}
+}
+@media (min-width:1000px){.list{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="top"><div class="wrap">
+  <div class="bar">
+    <h1><img src="icon.png" alt="" width="30" height="30">강동중 과학실 교구 찾기</h1>
+    <span class="sync" id="sync"></span>
+    <button class="icon" id="reload" title="새로고침" aria-label="새로고침">↻</button>
+  </div>
+  <div class="bar2">
+    <div class="search" id="searchBox">
+      <span class="mag">🔍</span>
+      <input id="q" type="search" placeholder="품명 검색 (초성도 돼요: ㄱㄹㄱ)" autocomplete="off" enterkeyhint="search">
+      <button class="clear" id="clear" aria-label="지우기">✕</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-view="list" aria-selected="true">찾기</button>
+      <button class="tab" role="tab" data-view="cab" aria-selected="false">교구장</button>
+    </div>
+    <button class="btn main addTop" id="addTop">＋ 교구 추가</button>
+  </div>
+</div></div>
+
+<main class="wrap">
+  <div class="demo" id="demo" hidden>연습 모드예요. 구글 시트와 연결하기 전이라 이 기기에만 저장됩니다.</div>
+  <section id="v-list">
+    <div class="chips" id="rooms"></div>
+    <div class="count" id="count"></div>
+    <div class="list" id="list"></div>
+  </section>
+  <section id="v-cab" class="cabView" hidden>
+    <div class="chips" id="cabs"></div>
+    <div>
+      <div class="cabTitle" id="cabTitle"></div>
+      <div class="cab" id="cab"></div>
+    </div>
+  </section>
+</main>
+
+<button class="fab" id="fab" aria-label="교구 추가">＋</button>
+
+<dialog id="dlg">
+  <form id="form" method="dialog">
+    <div class="dh"><h2 id="dTitle">교구 추가</h2><button type="button" class="icon" id="dClose" aria-label="닫기">✕</button></div>
+    <label class="f">품명<input id="fName" required autocomplete="off" placeholder="예: 검류계"></label>
+    <label class="f">어느 장에 있나요?<select id="fJang" required></select></label>
+    <div class="grp">단<div class="opts" id="fDan"></div></div>
+    <div class="grp" id="gLr">서랍 좌우<div class="opts" id="fLr"></div></div>
+    <div class="row2">
+      <label class="f">규격<input id="fSpec" autocomplete="off" placeholder="예: 500 mL"></label>
+      <label class="f">단위<input id="fUnit" list="units" autocomplete="off" placeholder="개"><datalist id="units"></datalist></label>
+    </div>
+    <div class="row2">
+      <div class="grp">수량<div class="qtyBox f"><button type="button" id="qMinus" aria-label="하나 줄이기">−</button><input id="fQty" inputmode="numeric" autocomplete="off"><button type="button" id="qPlus" aria-label="하나 늘리기">＋</button></div></div>
+      <label class="f">비고(구입시기)<input id="fNote" autocomplete="off" placeholder="예: 26.3월"></label>
+    </div>
+    <div class="acts">
+      <button type="button" class="btn del" id="bDel">삭제</button>
+      <button type="button" class="btn sub" id="bMore">저장하고 계속</button>
+      <button type="submit" class="btn main" id="bSave">저장</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="view">
+  <div class="vw">
+    <div class="dh top0"><h2 id="vName"></h2>
+      <div class="vbtn"><button type="button" class="btn sub sm" id="vEdit">✎ 편집</button><button type="button" class="icon" id="vClose" aria-label="닫기">✕</button></div></div>
+    <div class="vloc" id="vLoc"></div>
+    <dl id="vInfo"></dl>
+    <button type="button" class="btn" id="vGo">이 교구장 열어 보기</button>
+  </div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ───── 설정: Apps Script 웹앱 주소를 따옴표 안에 붙여 넣으세요 ───── */
+const API_URL = "https://script.google.com/macros/s/AKfycbxj4tg305spuNixvoHieVKe55vTNVDfgwBn71Nw7VDQfp2CUkEA2qGC9vT7iA2BcXTNmg/exec";
+/* ─────────────────────────────────────────────────────────── */
+
+const $ = id => document.getElementById(id);
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const DEMO = !API_URL;
+const DEF_SET = {
+  jang: [...Array(10)].map((_, i) => "과1-" + (i + 1)).concat([...Array(10)].map((_, i) => "과2-" + (i + 1))),
+  dan: ["최상", "상3", "상2", "상1", "서랍", "하2", "하1"], lr: ["좌", "우"],
+  unit: ["개", "세트", "대", "병", "통", "상자", "권", "장"]
+};
+const SAMPLE = [
+  ["과1-1","상2","","검류계","",10,"개","24.3월"],["과1-1","상2","","전류계","직류용",12,"개",""],
+  ["과1-1","상1","","역학 수레","",20,"대","25.3월"],["과1-1","서랍","좌","레이저 펜","red, green",6,"개","AA 건전지 필요"],
+  ["과1-2","상3","","비커","250 mL",30,"개",""],["과1-2","상3","","비커","500 mL",20,"개",""],
+  ["과1-2","하1","","전자저울","0.01 g",8,"대","23.2학기"],["과1-3","최상","","지구본","",6,"개",""],
+  ["과2-1","상1","","현미경","광학",16,"대",""],["과2-1","하2","","알코올램프","",15,"개",""],
+  ["과2-2","상2","","암석 표본","",5,"세트",""],["과2-2","서랍","우","핀셋","",40,"개",""]
+].map((a, i) => ({ id: "s" + i, jang: a[0], dan: a[1], lr: a[2], name: a[3], spec: a[4], qty: String(a[5]), unit: a[6], note: a[7] }));
+
+let S = { items: [], set: DEF_SET, view: "list", room: "", cab: "", q: "", editing: null };
+const idMap = {};
+let chain = Promise.resolve(), pending = 0;
+
+/* ───── 도우미 ───── */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+const cho = s => [...s].map(ch => { const c = ch.charCodeAt(0) - 0xAC00; return c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : ch; }).join("");
+const norm = s => String(s || "").toLowerCase().replace(/\s+/g, "");
+const isDrawer = d => String(d || "").startsWith("서랍");
+const roomOf = j => j.includes("-") ? j.split("-")[0] : "기타";
+const rooms = () => [...new Set(S.set.jang.concat(S.items.map(i => i.jang)).filter(Boolean).map(roomOf))];
+const allJang = () => [...new Set(S.set.jang.concat(S.items.map(i => i.jang)).filter(Boolean))];
+const posText = it => [it.dan, it.lr].filter(Boolean).join(" ");
+const qtyText = it => it.qty ? it.qty + (it.unit || "") : "";
+function toast(t){ const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 1800); }
+function sync(){ const el = $("sync"); el.className = "sync" + (pending ? " busy" : ""); el.textContent = DEMO ? "연습 모드" : pending ? "저장 중…" : "저장됨 ✓"; }
+
+/* ───── 데이터 ───── */
+function keep(){ LS.set(DEMO ? "kyogu_demo2" : "kyogu_cache", { items: S.items, set: S.set }); }
+async function load(){
+  const c = LS.get(DEMO ? "kyogu_demo2" : "kyogu_cache", null);
+  if (c && c.items){ S.items = c.items; S.set = c.set || DEF_SET; render(); }
+  if (DEMO){ if (!c){ S.items = SAMPLE; keep(); render(); } return; }
+  if (pending) return;
+  $("sync").textContent = "불러오는 중…";
+  try{
+    const r = await (await fetch(API_URL + "?action=list&t=" + Date.now())).json();
+    if (!r.ok) throw new Error(r.error);
+    if (pending) return;
+    S.items = r.items; S.set = fixSet(r.settings); keep(); render();
+  }catch(e){ toast("시트를 불러오지 못했어요"); }
+  sync();
+}
+function fixSet(s){ const o = {}; for (const k in DEF_SET) o[k] = s && s[k] && s[k].length ? s[k] : DEF_SET[k]; return o; }
+function send(action, item){
+  if (DEMO){ keep(); return; }
+  pending++; sync();
+  chain = chain.then(async () => {
+    const body = { action, pw: LS.get("kyogu_pw", ""), item: { ...item, id: idMap[item.id] || item.id } };
+    let r = await post(body);
+    if (!r.ok && r.error === "auth"){
+      const pw = prompt("편집 암호를 입력하세요");
+      if (pw != null){ LS.set("kyogu_pw", pw); body.pw = pw; r = await post(body); }
+    }
+    if (!r.ok) throw new Error(r.error);
+    if (action === "add"){ idMap[item.id] = r.id; const it = S.items.find(x => x.id === item.id); if (it) it.id = r.id; }
+    keep();
+  }).catch(e => { broken = true; toast(String(e.message) === "auth" ? "암호가 맞지 않아요" : "저장하지 못했어요. 다시 불러옵니다"); })
+    .finally(() => { pending--; sync(); if (!pending && broken){ broken = false; load(); } });
+}
+let broken = false;
+async function post(body){
+  try{ return await (await fetch(API_URL, { method: "POST", body: JSON.stringify(body) })).json(); }
+  catch(e){ return { ok: false, error: "network" }; }
+}
+
+/* ───── 화면 ───── */
+function matches(it, q){
+  if (!q) return true;
+  const hay = norm([it.name, it.spec, it.note, it.jang, it.dan, it.lr].join(" ")), hc = cho(norm(it.name));
+  return q.split(/\s+/).filter(Boolean).every(t => { const n = norm(t); return /^[ㄱ-ㅎ]+$/.test(n) ? hc.includes(n) : hay.includes(n); });
+}
+function render(){
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.view === S.view));
+  $("v-list").hidden = S.view !== "list"; $("v-cab").hidden = S.view !== "cab";
+  $("demo").hidden = !DEMO; sync();
+  S.view === "list" ? renderList() : renderCab();
+}
+function renderList(){
+  const rs = rooms();
+  $("rooms").innerHTML = [["", "전체"]].concat(rs.map(r => [r, r])).map(([v, t]) =>
+    `<button class="chip" data-room="${esc(v)}" aria-pressed="${S.room === v}"><b>${esc(t)}</b></button>`).join("");
+  const order = allJang();
+  const res = S.items.filter(it => it.name && (!S.room || roomOf(it.jang) === S.room) && matches(it, S.q))
+    .sort((a, b) => order.indexOf(a.jang) - order.indexOf(b.jang) || S.set.dan.indexOf(a.dan) - S.set.dan.indexOf(b.dan) || a.name.localeCompare(b.name, "ko"));
+  $("count").textContent = S.q ? `'${S.q}' 검색 결과 ${res.length}개` : `전체 ${res.length}개`;
+  $("list").innerHTML = res.length ? res.map(it => `
+    <button class="item" data-id="${esc(it.id)}">
+      <span class="name">${esc(it.name)}${it.spec ? `<span class="spec">${esc(it.spec)}</span>` : ""}</span>
+      ${qtyText(it) ? `<span class="qty">${esc(qtyText(it))}</span>` : "<span></span>"}
+      <span class="loc"><span class="badge r${rs.indexOf(roomOf(it.jang)) % 3}">${esc(it.jang || "위치 없음")}</span>
+        ${posText(it) ? `<span class="pos">${esc(posText(it))}</span>` : ""}${it.note ? `<span class="note">${esc(it.note)}</span>` : ""}</span>
+    </button>`).join("")
+    : `<div class="empty"><span>🔎</span>${S.q ? "찾는 교구가 없어요" : "아직 등록된 교구가 없어요<br>＋ 버튼으로 추가해 보세요"}</div>`;
+}
+function renderCab(){
+  const js = allJang(), rs = rooms();
+  if (!js.includes(S.cab)) S.cab = js[0] || "";
+  const cnt = {}; S.items.forEach(i => cnt[i.jang] = (cnt[i.jang] || 0) + 1);
+  $("cabs").innerHTML = js.map(j => `<button class="chip" data-cab="${esc(j)}" aria-pressed="${S.cab === j}"><b>${esc(j)}</b>${cnt[j] ? `<small>${cnt[j]}</small>` : ""}</button>`).join("");
+  $("cabTitle").innerHTML = `<span class="badge r${rs.indexOf(roomOf(S.cab)) % 3}">${esc(S.cab)}</span> 교구 ${cnt[S.cab] || 0}개`;
+  const here = S.items.filter(i => i.jang === S.cab);
+  const dans = [...new Set(S.set.dan.concat(here.map(i => i.dan).filter(Boolean)))];
+  const pill = it => `<button class="pill" data-id="${esc(it.id)}">${esc(it.name)}${it.spec ? ` <i>${esc(it.spec)}</i>` : ""}${qtyText(it) ? `<i>${esc(qtyText(it))}</i>` : ""}</button>`;
+  let html = dans.map(d => {
+    const on = here.filter(i => i.dan === d), whole = on.filter(i => !i.lr);
+    const isDr = isDrawer(d);
+    const cols = [...new Set((isDr ? S.set.lr : []).concat(on.map(i => i.lr).filter(Boolean)))];
+    const kind = d.startsWith("하") ? "low" : d.startsWith("서랍") ? "drawer" : "up";
+    const cell = (l, arr, full) => `<div class="cell${full ? " full" : ""}"><div class="cl"><span>${esc(l || (isDr ? "위치 미정" : ""))}</span><button class="plus" data-add="${esc(d)}|${esc(l)}" aria-label="${esc(d + " " + l)}에 추가">＋</button></div>${arr.map(pill).join("")}</div>`;
+    return `<div class="shelf ${kind}"><div class="lab">${esc(d)}</div><div class="cells" style="--n:${cols.length || 1}">
+      ${!isDr || whole.length ? cell("", whole, true) : ""}${cols.map(l => cell(l, on.filter(i => i.lr === l))).join("")}</div></div>`;
+  }).join("");
+  const lost = here.filter(i => !i.dan);
+  if (lost.length) html += `<div class="shelf"><div class="lab">?</div><div class="cells" style="--n:1"><div class="cell full">${lost.map(pill).join("")}</div></div></div>`;
+  $("cab").innerHTML = html || `<div class="empty">교구장이 없어요</div>`;
+}
+
+/* ───── 입력창 ───── */
+function radios(el, name, vals, cur, blank){
+  el.innerHTML = (blank ? [["", blank]] : []).concat(vals.map(v => [v, v])).map(([v, t]) =>
+    `<label><input type="radio" name="${name}" value="${esc(v)}" ${v === cur ? "checked" : ""}><span>${esc(t)}</span></label>`).join("");
+}
+function openForm(it, preset){
+  S.editing = it || null;
+  const last = LS.get("kyogu_last", {});
+  const v = it || { jang: (preset && preset.jang) || last.jang || (S.view === "cab" ? S.cab : "") || allJang()[0], dan: preset ? preset.dan : last.dan || "", lr: preset ? preset.lr : last.lr || "", name: "", spec: "", qty: "", unit: "", note: "" };
+  $("dTitle").textContent = it ? "교구 고치기" : "교구 추가";
+  const groups = {}; allJang().forEach(j => (groups[roomOf(j)] = groups[roomOf(j)] || []).push(j));
+  $("fJang").innerHTML = Object.entries(groups).map(([r, js]) => `<optgroup label="${esc(r)}">${js.map(j => `<option ${j === v.jang ? "selected" : ""}>${esc(j)}</option>`).join("")}</optgroup>`).join("");
+  radios($("fDan"), "dan", [...new Set(S.set.dan.concat(v.dan || []))], v.dan);
+  radios($("fLr"), "lr", [...new Set(S.set.lr.concat(v.lr || []))], v.lr);
+  syncLr();
+  $("units").innerHTML = S.set.unit.map(u => `<option value="${esc(u)}">`).join("");
+  $("fName").value = v.name; $("fSpec").value = v.spec; $("fQty").value = v.qty; $("fUnit").value = v.unit; $("fNote").value = v.note;
+  $("bDel").hidden = !it; $("bMore").hidden = !!it;
+  $("dlg").showModal();
+  if (!it) setTimeout(() => $("fName").focus(), 50);
+}
+function syncLr(){ $("gLr").hidden = !isDrawer((document.querySelector("input[name=dan]:checked") || {}).value); }
+function readForm(){
+  const rv = n => (document.querySelector(`input[name=${n}]:checked`) || {}).value || "";
+  return { jang: $("fJang").value, dan: rv("dan"), lr: isDrawer(rv("dan")) ? rv("lr") : "", name: $("fName").value.trim(), spec: $("fSpec").value.trim(), qty: $("fQty").value.trim(), unit: $("fUnit").value.trim(), note: $("fNote").value.trim() };
+}
+function save(more){
+  const f = readForm();
+  if (!f.name){ toast("품명을 적어 주세요"); $("fName").focus(); return; }
+  if (!f.dan){ toast("단을 골라 주세요"); return; }
+  if (isDrawer(f.dan) && !f.lr){ toast("서랍은 좌·우를 골라 주세요"); return; }
+  if (S.editing){ Object.assign(S.editing, f); send("update", S.editing); toast("고쳤어요"); }
+  else { const it = { id: "t" + Date.now() + Math.random().toString(36).slice(2, 6), ...f }; S.items.push(it); send("add", it); toast(`${f.name} 저장! (${f.jang} ${posText(f)})`); LS.set("kyogu_last", { jang: f.jang, dan: f.dan, lr: f.lr }); }
+  keep(); render();
+  if (more){ ["fName", "fSpec", "fQty", "fNote"].forEach(i => $(i).value = ""); $("fName").focus(); }
+  else $("dlg").close();
+}
+
+function openView(it){
+  S.viewing = it;
+  $("vName").textContent = it.name || "(이름 없음)";
+  $("vLoc").innerHTML = `<span class="badge r${rooms().indexOf(roomOf(it.jang)) % 3}">${esc(it.jang || "위치 없음")}</span>${posText(it) ? `<span class="pos">${esc(posText(it))}</span>` : ""}`;
+  $("vInfo").innerHTML = [["수량", qtyText(it)], ["규격", it.spec], ["비고", it.note]].filter(r => r[1]).map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join("");
+  $("vGo").hidden = !it.jang || (S.view === "cab" && S.cab === it.jang);
+  $("view").showModal();
+}
+$("vEdit").onclick = () => { $("view").close(); openForm(S.viewing); };
+$("vClose").onclick = () => $("view").close();
+$("vGo").onclick = () => { S.view = "cab"; S.cab = S.viewing.jang; $("view").close(); render(); scrollTo(0, 0); };
+$("view").addEventListener("click", e => { if (e.target === $("view")) $("view").close(); });
+
+/* ───── 이벤트 ───── */
+$("form").addEventListener("submit", e => { e.preventDefault(); save(false); });
+$("fDan").addEventListener("change", syncLr);
+$("bMore").onclick = () => save(true);
+$("bDel").onclick = () => {
+  const it = S.editing; if (!it || !confirm(`'${it.name}'을(를) 목록에서 지울까요?`)) return;
+  S.items = S.items.filter(x => x !== it); send("delete", it); keep(); render(); $("dlg").close(); toast("지웠어요");
+};
+$("dClose").onclick = () => $("dlg").close();
+$("dlg").addEventListener("click", e => { if (e.target === $("dlg")) $("dlg").close(); });
+$("qMinus").onclick = () => { const n = parseFloat($("fQty").value) || 0; $("fQty").value = Math.max(0, n - 1); };
+$("qPlus").onclick = () => { const n = parseFloat($("fQty").value) || 0; $("fQty").value = n + 1; };
+$("fab").onclick = $("addTop").onclick = () => openForm(null);
+$("reload").onclick = () => { load(); toast("새로 불러왔어요"); };
+$("q").addEventListener("input", e => { S.q = e.target.value.trim(); $("searchBox").classList.toggle("has", !!S.q); if (S.q) S.view = "list"; render(); });
+$("clear").onclick = () => { $("q").value = ""; S.q = ""; $("searchBox").classList.remove("has"); render(); $("q").focus(); };
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => { S.view = t.dataset.view; render(); });
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-room],[data-cab],[data-id],[data-add]"); if (!b) return;
+  if (b.dataset.room != null){ S.room = b.dataset.room; render(); }
+  else if (b.dataset.cab){ S.cab = b.dataset.cab; render(); }
+  else if (b.dataset.add != null){ const [dan, lr] = b.dataset.add.split("|"); openForm(null, { jang: S.cab, dan, lr }); }
+  else if (b.dataset.id){ const it = S.items.find(x => x.id === b.dataset.id); if (it) openView(it); }
+});
+const p = new URLSearchParams(location.search).get("jang");
+if (p){ S.view = "cab"; S.cab = p; }
+render(); load();
+</script>
+</body>
+</html>
