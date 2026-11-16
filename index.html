@@ -212,7 +212,7 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
     <label class="f">품명<input id="fName" required autocomplete="off" placeholder="예: 검류계"></label>
     <label class="f">어느 장에 있나요?<select id="fJang" required></select></label>
     <div class="grp">단<div class="opts" id="fDan"></div></div>
-    <div class="grp" id="gLr">서랍 좌우<div class="opts" id="fLr"></div></div>
+    <div class="grp" id="gLr">좌우 위치<div class="opts" id="fLr"></div></div>
     <div class="row2">
       <label class="f">규격<input id="fSpec" autocomplete="off" placeholder="예: 500 mL"></label>
       <label class="f">단위<input id="fUnit" list="units" autocomplete="off" placeholder="개"><datalist id="units"></datalist></label>
@@ -244,7 +244,7 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
 const API_URL = "https://script.google.com/macros/s/AKfycbxj4tg305spuNixvoHieVKe55vTNVDfgwBn71Nw7VDQfp2CUkEA2qGC9vT7iA2BcXTNmg/exec";
 /* ─────────────────────────────────────────────────────────── */
 
-const VER = "7"; // 고칠 때마다 올립니다
+const VER = "8"; // 고칠 때마다 올립니다
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1nN3gv126M7_0eIZJyqdEIz5ubmkKLiBS09KRHS3Fsq4/edit";
 const SHEET_PIN = "1630";
 
@@ -277,11 +277,23 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
 const cho = s => [...s].map(ch => { const c = ch.charCodeAt(0) - 0xAC00; return c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : ch; }).join("");
 const norm = s => String(s || "").toLowerCase().replace(/\s+/g, "");
+/* 모양이 다른 교구장: 층은 아래에서부터 1층. 여기에 없는 장은 기본형(최상·상3~1·서랍·하2~1) */
+const floors = n => [...Array(n)].map((_, i) => (n - i) + "층");
+const LAYOUTS = {
+  "과1-11": { dan: floors(4), lr: [] }, "과1-12": { dan: floors(4), lr: [] }, "과1-13": { dan: floors(4), lr: [] },
+  "과1-14": { dan: floors(5), lr: ["좌", "중", "우"] }
+};
+const dansOf = j => LAYOUTS[j] ? LAYOUTS[j].dan : S.set.dan.filter(d => !/층$/.test(d));
+const lrOf = (j, d) => LAYOUTS[j] ? LAYOUTS[j].lr : isDrawer(d) ? ["좌", "우"] : [];
 const isDrawer = d => String(d || "").startsWith("서랍");
 const roomOf = j => j.includes("-") ? j.split("-")[0] : "기타";
 const roomName = r => { const m = /^과(\d+)$/.exec(r); return m ? "과학실 " + m[1] : r; };
-const rooms = () => [...new Set(S.set.jang.concat(S.items.map(i => i.jang)).filter(Boolean).map(roomOf))];
-const allJang = () => [...new Set(S.set.jang.concat(S.items.map(i => i.jang)).filter(Boolean))];
+const rooms = () => [...new Set(allJang().map(roomOf))];
+const allJang = () => {
+  const js = [...new Set(S.set.jang.concat(Object.keys(LAYOUTS), S.items.map(i => i.jang)).filter(Boolean))];
+  const rs = [...new Set(js.map(roomOf))], num = j => parseInt(j.split("-")[1]) || 0;
+  return js.map((j, i) => [j, i]).sort((a, b) => rs.indexOf(roomOf(a[0])) - rs.indexOf(roomOf(b[0])) || num(a[0]) - num(b[0]) || a[1] - b[1]).map(x => x[0]);
+};
 const posText = it => [it.dan, it.lr].filter(Boolean).join(" ");
 const qtyText = it => it.qty ? it.qty + (it.unit || "") : "";
 function toast(t){ const el = $("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 1800); }
@@ -356,7 +368,7 @@ function renderList(){
     `<button class="chip" data-room="${esc(v)}" aria-pressed="${S.room === v}"><b>${esc(t)}</b></button>`).join("");
   const order = allJang();
   const res = S.items.filter(it => it.name && (!S.room || roomOf(it.jang) === S.room) && matches(it, S.q))
-    .sort((a, b) => order.indexOf(a.jang) - order.indexOf(b.jang) || S.set.dan.indexOf(a.dan) - S.set.dan.indexOf(b.dan) || a.name.localeCompare(b.name, "ko"));
+    .sort((a, b) => order.indexOf(a.jang) - order.indexOf(b.jang) || dansOf(a.jang).indexOf(a.dan) - dansOf(b.jang).indexOf(b.dan) || a.name.localeCompare(b.name, "ko"));
   $("count").textContent = S.q ? `'${S.q}' 검색 결과 ${res.length}개` : `전체 ${res.length}개`;
   $("list").innerHTML = res.length ? res.map(it => `
     <button class="item" data-id="${esc(it.id)}">
@@ -378,12 +390,12 @@ function renderCab(){
   }).join("");
   $("cabTitle").innerHTML = `<span class="badge r${rs.indexOf(roomOf(S.cab)) % 3}">${esc(S.cab)}</span> 교구 ${cnt[S.cab] || 0}개`;
   const here = S.items.filter(i => i.jang === S.cab);
-  const dans = [...new Set(S.set.dan.concat(here.map(i => i.dan).filter(Boolean)))];
+  const dans = [...new Set(dansOf(S.cab).concat(here.map(i => i.dan).filter(Boolean)))];
   const pill = it => `<button class="pill" data-id="${esc(it.id)}">${esc(it.name)}${it.spec ? ` <i>${esc(it.spec)}</i>` : ""}${qtyText(it) ? `<i>${esc(qtyText(it))}</i>` : ""}</button>`;
   let html = dans.map(d => {
     const on = here.filter(i => i.dan === d), whole = on.filter(i => !i.lr);
-    const isDr = isDrawer(d);
-    const cols = [...new Set((isDr ? S.set.lr : []).concat(on.map(i => i.lr).filter(Boolean)))];
+    const opts = lrOf(S.cab, d), isDr = opts.length > 0;
+    const cols = [...new Set(opts.concat(on.map(i => i.lr).filter(Boolean)))];
     const kind = d.startsWith("하") ? "low" : d.startsWith("서랍") ? "drawer" : "up";
     const cell = (l, arr, full) => `<div class="cell${full ? " full" : ""}"><div class="cl"><span>${esc(l || (isDr ? "위치 미정" : ""))}</span><button class="plus" data-add="${esc(d)}|${esc(l)}" aria-label="${esc(d + " " + l)}에 추가">＋</button></div>${arr.map(pill).join("")}</div>`;
     return `<div class="shelf ${kind}"><div class="lab">${esc(d)}</div><div class="cells" style="--n:${cols.length || 1}">
@@ -406,25 +418,38 @@ function openForm(it, preset){
   $("dTitle").textContent = it ? "교구 고치기" : "교구 추가";
   const groups = {}; allJang().forEach(j => (groups[roomOf(j)] = groups[roomOf(j)] || []).push(j));
   $("fJang").innerHTML = Object.entries(groups).map(([r, js]) => `<optgroup label="${esc(roomName(r))}">${js.map(j => `<option ${j === v.jang ? "selected" : ""}>${esc(j)}</option>`).join("")}</optgroup>`).join("");
-  radios($("fDan"), "dan", [...new Set(S.set.dan.concat(v.dan || []))], v.dan);
-  radios($("fLr"), "lr", [...new Set(S.set.lr.concat(v.lr || []))], v.lr);
-  syncLr();
+  syncDan(v.dan, v.lr);
   $("units").innerHTML = S.set.unit.map(u => `<option value="${esc(u)}">`).join("");
   $("fName").value = v.name; $("fSpec").value = v.spec; $("fQty").value = v.qty; $("fUnit").value = v.unit; $("fNote").value = v.note;
   $("bDel").hidden = !it; $("bMore").hidden = !!it;
   $("dlg").showModal();
   if (!it) setTimeout(() => $("fName").focus(), 50);
 }
-function syncLr(){ $("gLr").hidden = !isDrawer((document.querySelector("input[name=dan]:checked") || {}).value); }
+const picked = n => (document.querySelector(`input[name=${n}]:checked`) || {}).value || "";
+function syncDan(dan, lr){ // 고른 장에 맞춰 단 목록을 다시 그립니다
+  const j = $("fJang").value, ds = dansOf(j);
+  if (dan == null) dan = picked("dan");
+  if (lr == null) lr = picked("lr");
+  const keep = S.editing && S.editing.jang === j && S.editing.dan === dan;
+  if (!ds.includes(dan) && !keep) dan = "";
+  radios($("fDan"), "dan", [...new Set(ds.concat(dan || []))], dan);
+  syncLr(lr);
+}
+function syncLr(lr){
+  if (lr == null || typeof lr !== "string") lr = picked("lr");
+  const opts = lrOf($("fJang").value, picked("dan"));
+  radios($("fLr"), "lr", opts, opts.includes(lr) ? lr : "");
+  $("gLr").hidden = !opts.length;
+}
 function readForm(){
   const rv = n => (document.querySelector(`input[name=${n}]:checked`) || {}).value || "";
-  return { jang: $("fJang").value, dan: rv("dan"), lr: isDrawer(rv("dan")) ? rv("lr") : "", name: $("fName").value.trim(), spec: $("fSpec").value.trim(), qty: $("fQty").value.trim(), unit: $("fUnit").value.trim(), note: $("fNote").value.trim() };
+  return { jang: $("fJang").value, dan: rv("dan"), lr: lrOf($("fJang").value, rv("dan")).length ? rv("lr") : "", name: $("fName").value.trim(), spec: $("fSpec").value.trim(), qty: $("fQty").value.trim(), unit: $("fUnit").value.trim(), note: $("fNote").value.trim() };
 }
 function save(more){
   const f = readForm();
   if (!f.name){ toast("품명을 적어 주세요"); $("fName").focus(); return; }
   if (!f.dan){ toast("단을 골라 주세요"); return; }
-  if (isDrawer(f.dan) && !f.lr){ toast("서랍은 좌·우를 골라 주세요"); return; }
+  if (lrOf(f.jang, f.dan).length && !f.lr){ toast("좌우 위치를 골라 주세요"); return; }
   if (S.editing){ Object.assign(S.editing, f); send("update", S.editing); toast("고쳤어요"); }
   else { const it = { id: "t" + Date.now() + Math.random().toString(36).slice(2, 6), ...f }; S.items.push(it); send("add", it); toast(`${f.name} 저장! (${f.jang} ${posText(f)})`); LS.set("kyogu_last", { jang: f.jang, dan: f.dan, lr: f.lr }); }
   keep(); render();
@@ -447,7 +472,8 @@ $("view").addEventListener("click", e => { if (e.target === $("view")) $("view")
 
 /* ───── 이벤트 ───── */
 $("form").addEventListener("submit", e => { e.preventDefault(); save(false); });
-$("fDan").addEventListener("change", syncLr);
+$("fDan").addEventListener("change", () => syncLr());
+$("fJang").addEventListener("change", () => syncDan());
 $("bMore").onclick = () => save(true);
 $("bDel").onclick = () => {
   const it = S.editing; if (!it || !confirm(`'${it.name}'을(를) 목록에서 지울까요?`)) return;
