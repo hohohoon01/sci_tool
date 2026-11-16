@@ -244,7 +244,7 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
 const API_URL = "https://script.google.com/macros/s/AKfycbxj4tg305spuNixvoHieVKe55vTNVDfgwBn71Nw7VDQfp2CUkEA2qGC9vT7iA2BcXTNmg/exec";
 /* ─────────────────────────────────────────────────────────── */
 
-const VER = "8"; // 고칠 때마다 올립니다
+const VER = "9"; // 고칠 때마다 올립니다
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1nN3gv126M7_0eIZJyqdEIz5ubmkKLiBS09KRHS3Fsq4/edit";
 const SHEET_PIN = "1630";
 
@@ -277,14 +277,18 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
 const cho = s => [...s].map(ch => { const c = ch.charCodeAt(0) - 0xAC00; return c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : ch; }).join("");
 const norm = s => String(s || "").toLowerCase().replace(/\s+/g, "");
-/* 모양이 다른 교구장: 층은 아래에서부터 1층. 여기에 없는 장은 기본형(최상·상3~1·서랍·하2~1) */
+/* 교구장 모양. 번호는 아래에서부터 1. 여기에 없는 장(과2 등)은 기본형 */
 const floors = n => [...Array(n)].map((_, i) => (n - i) + "층");
+const BASE = ["최상", "상3", "상2", "상1", "서랍", "하2", "하1"];
+const LOW3 = ["최상", "상3", "상2", "상1", "서랍", "하3", "하2", "하1"];
 const LAYOUTS = {
+  "과1-4": { dan: ["상5", "상4", "상3", "상2", "상1", "하2", "하1"], lr: [] },
   "과1-11": { dan: floors(4), lr: [] }, "과1-12": { dan: floors(4), lr: [] }, "과1-13": { dan: floors(4), lr: [] },
   "과1-14": { dan: floors(5), lr: ["좌", "중", "우"] }
 };
-const dansOf = j => LAYOUTS[j] ? LAYOUTS[j].dan : S.set.dan.filter(d => !/층$/.test(d));
-const lrOf = (j, d) => LAYOUTS[j] ? LAYOUTS[j].lr : isDrawer(d) ? ["좌", "우"] : [];
+[1, 2, 3, 5, 6, 7, 8, 9, 10].forEach(n => LAYOUTS["과1-" + n] = { dan: LOW3, lr: [] });
+const dansOf = j => LAYOUTS[j] ? LAYOUTS[j].dan : BASE;
+const lrOf = (j, d) => LAYOUTS[j] && LAYOUTS[j].lr.length ? LAYOUTS[j].lr : isDrawer(d) ? ["좌", "우"] : []; // lr이 비면 서랍만 좌·우
 const isDrawer = d => String(d || "").startsWith("서랍");
 const roomOf = j => j.includes("-") ? j.split("-")[0] : "기타";
 const roomName = r => { const m = /^과(\d+)$/.exec(r); return m ? "과학실 " + m[1] : r; };
