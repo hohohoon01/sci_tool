@@ -244,7 +244,7 @@ label.f{display:grid;gap:4px;font-size:13px;color:var(--ink2)}
 const API_URL = "https://script.google.com/macros/s/AKfycbxj4tg305spuNixvoHieVKe55vTNVDfgwBn71Nw7VDQfp2CUkEA2qGC9vT7iA2BcXTNmg/exec";
 /* ─────────────────────────────────────────────────────────── */
 
-const VER = "9"; // 고칠 때마다 올립니다
+const VER = "10"; // 고칠 때마다 올립니다
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/1nN3gv126M7_0eIZJyqdEIz5ubmkKLiBS09KRHS3Fsq4/edit";
 const SHEET_PIN = "1630";
 
@@ -282,7 +282,7 @@ const floors = n => [...Array(n)].map((_, i) => (n - i) + "층");
 const BASE = ["최상", "상3", "상2", "상1", "서랍", "하2", "하1"];
 const LOW3 = ["최상", "상3", "상2", "상1", "서랍", "하3", "하2", "하1"];
 const LAYOUTS = {
-  "과1-4": { dan: ["상5", "상4", "상3", "상2", "상1", "하2", "하1"], lr: [] },
+  "과1-4": { dan: ["최상", "상5", "상4", "상3", "상2", "상1", "하2", "하1"], lr: [] },
   "과1-11": { dan: floors(4), lr: [] }, "과1-12": { dan: floors(4), lr: [] }, "과1-13": { dan: floors(4), lr: [] },
   "과1-14": { dan: floors(5), lr: ["좌", "중", "우"] }
 };
